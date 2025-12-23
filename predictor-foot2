@@ -1,0 +1,1199 @@
+index.html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prédicteur Football Pro v3.2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pitch-dark: #0a3d2e;
+            --pitch-light: #0d5940;
+            --line-white: #e8f5e9;
+            --accent-yellow: #ffd700;
+            --accent-orange: #ff6b35;
+            --accent-red: #ff4757;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --text-light: #ffffff;
+            --text-dim: #b8d4c8;
+            --card-bg: rgba(13, 89, 64, 0.6);
+            --card-border: rgba(232, 245, 233, 0.2);
+            --shadow-glow: rgba(255, 215, 0, 0.15);
+        }
+        .dark {
+            --pitch-dark: #051a13;
+            --pitch-light: #0a3d2e;
+            --line-white: #c8e6c9;
+            --text-dim: #8fb9a8;
+            --card-bg: rgba(10, 61, 46, 0.7);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, var(--pitch-dark) 0%, var(--pitch-light) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(232, 245, 233, 0.03) 50px, rgba(232, 245, 233, 0.03) 100px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; }
+        header { text-align: center; margin-bottom: 40px; animation: slideDown 0.6s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(1.8rem, 5vw, 3.5rem);
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        .subtitle { font-size: 1.1rem; color: var(--text-dim); letter-spacing: 2px; font-weight: 300; }
+        .version-badge { display: inline-block; background: var(--accent-orange); color: var(--pitch-dark); padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-left: 10px; }
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        @media (max-width: 968px) { .main-grid { grid-template-columns: 1fr; } }
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.8s ease-out backwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--card-border);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .team-name-input {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Rajdhani', sans-serif;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .team-name-input:focus { outline: none; border-color: var(--accent-yellow); box-shadow: 0 0 20px var(--shadow-glow); }
+        .team-name-input::placeholder { color: var(--text-dim); }
+        .form-section { margin-bottom: 20px; }
+        .section-label { font-size: 0.95rem; font-weight: 600; color: var(--accent-orange); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .form-state-selector { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 12px; }
+        .state-btn {
+            padding: 10px 6px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .state-btn:hover { background: rgba(255, 255, 255, 0.1); transform: translateY(-2px); }
+        .state-btn.active { background: var(--accent-yellow); color: var(--pitch-dark); border-color: var(--accent-yellow); box-shadow: 0 0 20px var(--shadow-glow); }
+        .state-btn-small { padding: 5px 3px; font-size: 0.8rem; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+        .input-group { display: flex; flex-direction: column; }
+        .input-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; }
+        input[type="number"], input[type="date"], select {
+            padding: 10px;
+            font-size: 16px;
+            font-family: 'Rajdhani', sans-serif;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+        }
+        input[type="number"]:focus, input[type="date"]:focus, select:focus { outline: none; border-color: var(--accent-yellow); box-shadow: 0 0 15px var(--shadow-glow); }
+        select { cursor: pointer; }
+        select option { background: var(--pitch-dark); color: var(--text-light); }
+        .match-detail-container { background: rgba(0, 0, 0, 0.2); border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--card-border); }
+        .match-detail-header { font-size: 0.85rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 8px; text-align: center; }
+        .match-detail-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-items: end; }
+        .opponent-level-selector { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; }
+        .opponent-level-btn {
+            padding: 6px 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .opponent-level-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .opponent-level-btn.active { background: var(--accent-orange); color: var(--text-light); border-color: var(--accent-orange); }
+        .match-input-small { width: 100%; padding: 8px; font-size: 14px; text-align: center; }
+        .context-section { margin-top: 20px; }
+        .context-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .context-btn {
+            padding: 12px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .context-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .context-btn.active { background: var(--accent-orange); color: var(--text-light); border-color: var(--accent-orange); }
+
+        .absence-section { margin-top: 15px; }
+        .absence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .absence-column { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 12px; border: 1px solid var(--card-border); }
+        .absence-column-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; text-align: center; }
+        .absence-column-title.attack { color: var(--accent-red); }
+        .absence-column-title.defense { color: var(--accent-blue); }
+        .absence-list { display: flex; flex-direction: column; gap: 8px; }
+        .absence-item { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 10px; border: 1px solid var(--card-border); }
+        .absence-item-header { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; }
+        .absence-item-input { flex: 1; padding: 6px; font-size: 0.9rem; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 4px; color: var(--text-light); }
+        .absence-impact-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .absence-impact-btn {
+            padding: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .absence-impact-btn:hover { background: rgba(255,255,255,0.1); }
+        .absence-impact-btn.active.light { background: var(--accent-yellow); color: var(--pitch-dark); border-color: var(--accent-yellow); }
+        .absence-impact-btn.active.medium { background: var(--accent-orange); color: var(--text-light); border-color: var(--accent-orange); }
+        .absence-impact-btn.active.heavy { background: var(--accent-red); color: var(--text-light); border-color: var(--accent-red); }
+
+        .level-section { margin-top: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; border: 1px solid var(--card-border); }
+        .level-title { font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 12px; text-align: center; }
+        .level-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .rest-days-section { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; border: 1px solid var(--card-border); margin-bottom: 15px; }
+        .rest-days-title { font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 10px; text-align: center; }
+        .rest-days-input { width: 100%; padding: 12px; font-size: 1.1rem; text-align: center; }
+
+        .predict-btn {
+            width: 100%;
+            padding: 18px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
+            border: none;
+            border-radius: 12px;
+            color: var(--pitch-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 8px 25px var(--shadow-glow);
+        }
+        .predict-btn:hover { transform: translateY(-3px); box-shadow: 0 12px 35px var(--shadow-glow); }
+        .predict-btn:active { transform: translateY(-1px); }
+        .predict-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .results { margin-top: 40px; animation: fadeIn 0.8s ease-out; }
+        .result-card { background: var(--card-bg); backdrop-filter: blur(10px); border: 2px solid var(--accent-yellow); border-radius: 16px; padding: 30px; box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2); margin-bottom: 20px; }
+        .result-title { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 25px; text-align: center; }
+
+        .prediction-item { background: rgba(0, 0, 0, 0.3); border-left: 4px solid var(--accent-yellow); padding: 15px; margin-bottom: 12px; border-radius: 8px; transition: all 0.3s ease; }
+        .prediction-item:hover { background: rgba(0, 0, 0, 0.5); transform: translateX(5px); }
+        .prediction-label { font-size: 1rem; font-weight: 600; color: var(--accent-orange); margin-bottom: 6px; }
+        .prediction-value { font-size: 1.2rem; font-weight: 700; color: var(--text-light); }
+        .confidence { display: inline-block; margin-left: 10px; padding: 4px 12px; background: var(--accent-yellow); color: var(--pitch-dark); border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+
+        .xg-comparison { background: rgba(0, 0, 0, 0.3); border: 2px solid var(--card-border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }
+        .xg-title { font-size: 1.1rem; font-weight: 600; color: var(--accent-orange); margin-bottom: 12px; }
+        .xg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .xg-item { background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 8px; }
+        .xg-label { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 4px; }
+        .xg-value { font-size: 1.3rem; font-weight: 700; color: var(--accent-yellow); }
+        .xg-value.conceded { color: var(--accent-red); }
+
+        .hidden { display: none; }
+
+        .h2h-section { margin-top: 20px; }
+        .h2h-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .h2h-match { background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; }
+        .h2h-match-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 8px; text-align: center; }
+        .score-input { display: flex; gap: 8px; align-items: center; justify-content: center; }
+        .score-input input { width: 50px; text-align: center; padding: 8px 4px; }
+        .score-separator { font-size: 1.2rem; font-weight: 700; color: var(--text-dim); }
+
+        .custom-alert { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.3s ease-out; }
+        .custom-alert-content { background: var(--pitch-light); border: 3px solid var(--accent-orange); border-radius: 16px; padding: 30px; max-width: 400px; width: 90%; box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4); }
+        .custom-alert-message { color: var(--text-light); font-size: 1.1rem; margin-bottom: 20px; text-align: center; }
+        .custom-alert-btn { width: 100%; padding: 12px; font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; background: var(--accent-yellow); border: none; border-radius: 8px; color: var(--pitch-dark); cursor: pointer; transition: all 0.3s ease; }
+        .custom-alert-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px var(--shadow-glow); }
+
+        .no-predictions { background: rgba(255, 107, 53, 0.2); border: 2px solid var(--accent-orange); border-radius: 12px; padding: 20px; text-align: center; color: var(--text-light); font-size: 1rem; }
+
+        .disparity-indicator { background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px; margin-top: 15px; text-align: center; }
+        .disparity-label { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 5px; }
+        .disparity-value { font-size: 1.2rem; font-weight: 700; }
+        .disparity-value.favor-a { color: var(--accent-yellow); }
+        .disparity-value.favor-b { color: var(--accent-orange); }
+        .disparity-value.balanced { color: var(--accent-blue); }
+
+        .remove-btn {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            background: var(--accent-red);
+            border: none;
+            border-radius: 4px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .remove-btn:hover { background: #ff3535; }
+
+        .quick-fill-section { margin-top: 15px; text-align: center; }
+        .quick-fill-btn { padding: 8px 16px; font-size: 0.85rem; background: rgba(46, 204, 113, 0.3); border: 1px solid var(--accent-green); color: var(--accent-green); border-radius: 6px; cursor: pointer; margin: 3px; transition: all 0.2s; }
+        .quick-fill-btn:hover { background: rgba(46, 204, 113, 0.5); }
+
+        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: rgba(0, 0, 0, 0.3); padding: 12px; border-radius: 8px; text-align: center; border-left: 3px solid var(--accent-yellow); }
+        .stat-label { font-size: 0.8rem; color: var(--text-dim); }
+        .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--accent-yellow); margin-top: 5px; }
+
+        @media (max-width: 768px) {
+            .form-state-selector { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+            .state-btn { padding: 8px 3px; font-size: 0.9rem; }
+            .context-grid { grid-template-columns: 1fr; }
+            .h2h-inputs { grid-template-columns: 1fr; }
+            .input-row { grid-template-columns: 1fr; }
+            .match-detail-grid { grid-template-columns: repeat(2, 1fr); }
+            .match-detail-grid .input-group:last-child { grid-column: span 2; }
+            .opponent-level-selector { justify-content: center; }
+            .opponent-level-btn { padding: 8px 10px; font-size: 0.8rem; }
+            .absence-grid { grid-template-columns: 1fr; }
+            .level-inputs { grid-template-columns: 1fr; }
+            .stats-summary { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚽ PRÉDICTEUR FOOTBALL PRO <span class="version-badge">v3.2</span></h1>
+            <p class="subtitle">Analyse Avancée - xG Réels + Pondération Temporelle + Absences Joueurs Clés</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-title">🏠 Équipe Domicile</div>
+                <input type="text" class="team-name-input" id="teamA-name" placeholder="Nom de l'équipe à domicile">
+
+                <div class="quick-fill-section">
+                    <button class="quick-fill-btn" onclick="quickFillTeamA()">📋 Remplir démo</button>
+                </div>
+
+                <div class="level-section">
+                    <div class="level-title">📊 Niveau de l'équipe</div>
+                    <div class="level-inputs">
+                        <div class="input-group">
+                            <label class="input-label">Position au classement</label>
+                            <input type="number" id="teamA-rank" min="1" max="30" value="10">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Niveau global (1-10)</label>
+                            <select id="teamA-level">
+                                <option value="10">10 - Élite mondiale</option>
+                                <option value="9">9 - Top européen</option>
+                                <option value="8">8 - Très bon</option>
+                                <option value="7" selected>7 - Bon</option>
+                                <option value="6">6 - Moyen+</option>
+                                <option value="5">5 - Moyen</option>
+                                <option value="4">4 - Moyen-</option>
+                                <option value="3">3 - Faible</option>
+                                <option value="2">2 - Très faible</option>
+                                <option value="1">1 - Amateur</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">État de forme actuel</div>
+                    <div class="form-state-selector" id="teamA-form"></div>
+                </div>
+
+                <div class="rest-days-section">
+                    <div class="rest-days-title">⏰ Jours de repos avant le match</div>
+                    <input type="number" id="teamA-rest-days" min="1" max="14" value="7" class="rest-days-input">
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">📋 5 Derniers Matchs (xG RÉELS)</div>
+                    <div id="teamA-matches"></div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">🏠 3 Derniers Matchs À DOMICILE (xG RÉELS)</div>
+                    <div id="teamA-home-matches"></div>
+                </div>
+
+                <div class="absence-section">
+                    <div class="section-label">🚑 Absences Joueurs Clés</div>
+                    <div class="absence-grid">
+                        <div class="absence-column">
+                            <div class="absence-column-title attack">⚔️ ATTAQUE</div>
+                            <div class="absence-list" id="teamA-absence-attack"></div>
+                            <button class="context-btn" style="margin-top: 10px; width: 100%;" onclick="addAbsencePlayer('teamA', 'attack')">+ Ajouter joueur</button>
+                        </div>
+                        <div class="absence-column">
+                            <div class="absence-column-title defense">🛡️ DÉFENSE</div>
+                            <div class="absence-list" id="teamA-absence-defense"></div>
+                            <button class="context-btn" style="margin-top: 10px; width: 100%;" onclick="addAbsencePlayer('teamA', 'defense')">+ Ajouter joueur</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">✈️ Équipe Extérieur</div>
+                <input type="text" class="team-name-input" id="teamB-name" placeholder="Nom de l'équipe à l'extérieur">
+
+                <div class="quick-fill-section">
+                    <button class="quick-fill-btn" onclick="quickFillTeamB()">📋 Remplir démo</button>
+                </div>
+
+                <div class="level-section">
+                    <div class="level-title">📊 Niveau de l'équipe</div>
+                    <div class="level-inputs">
+                        <div class="input-group">
+                            <label class="input-label">Position au classement</label>
+                            <input type="number" id="teamB-rank" min="1" max="30" value="10">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Niveau global (1-10)</label>
+                            <select id="teamB-level">
+                                <option value="10">10 - Élite mondiale</option>
+                                <option value="9">9 - Top européen</option>
+                                <option value="8">8 - Très bon</option>
+                                <option value="7" selected>7 - Bon</option>
+                                <option value="6">6 - Moyen+</option>
+                                <option value="5">5 - Moyen</option>
+                                <option value="4">4 - Moyen-</option>
+                                <option value="3">3 - Faible</option>
+                                <option value="2">2 - Très faible</option>
+                                <option value="1">1 - Amateur</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">État de forme actuel</div>
+                    <div class="form-state-selector" id="teamB-form"></div>
+                </div>
+
+                <div class="rest-days-section">
+                    <div class="rest-days-title">⏰ Jours de repos avant le match</div>
+                    <input type="number" id="teamB-rest-days" min="1" max="14" value="7" class="rest-days-input">
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">📋 5 Derniers Matchs (xG RÉELS)</div>
+                    <div id="teamB-matches"></div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-label">✈️ 3 Derniers Matchs À L'EXTÉRIEUR (xG RÉELS)</div>
+                    <div id="teamB-away-matches"></div>
+                </div>
+
+                <div class="absence-section">
+                    <div class="section-label">🚑 Absences Joueurs Clés</div>
+                    <div class="absence-grid">
+                        <div class="absence-column">
+                            <div class="absence-column-title attack">⚔️ ATTAQUE</div>
+                            <div class="absence-list" id="teamB-absence-attack"></div>
+                            <button class="context-btn" style="margin-top: 10px; width: 100%;" onclick="addAbsencePlayer('teamB', 'attack')">+ Ajouter joueur</button>
+                        </div>
+                        <div class="absence-column">
+                            <div class="absence-column-title defense">🛡️ DÉFENSE</div>
+                            <div class="absence-list" id="teamB-absence-defense"></div>
+                            <button class="context-btn" style="margin-top: 10px; width: 100%;" onclick="addAbsencePlayer('teamB', 'defense')">+ Ajouter joueur</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🔄 3 Derniers Matchs Face à Face</div>
+            <div class="h2h-section">
+                <div class="h2h-inputs">
+                    <div class="h2h-match">
+                        <div class="h2h-match-label">Match 1 (plus récent)</div>
+                        <div class="score-input">
+                            <input type="number" id="h2h-1-a" min="0" value="0">
+                            <span class="score-separator">-</span>
+                            <input type="number" id="h2h-1-b" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="h2h-match">
+                        <div class="h2h-match-label">Match 2</div>
+                        <div class="score-input">
+                            <input type="number" id="h2h-2-a" min="0" value="0">
+                            <span class="score-separator">-</span>
+                            <input type="number" id="h2h-2-b" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="h2h-match">
+                        <div class="h2h-match-label">Match 3</div>
+                        <div class="score-input">
+                            <input type="number" id="h2h-3-a" min="0" value="0">
+                            <span class="score-separator">-</span>
+                            <input type="number" id="h2h-3-b" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="disparity-indicator" id="disparity-display">
+                <div class="disparity-label">Écart de niveau calculé</div>
+                <div class="disparity-value balanced" id="disparity-value">Équilibré</div>
+            </div>
+
+            <div class="context-section">
+                <div class="section-label">Contexte du match</div>
+                <div class="context-grid" id="context-selector"></div>
+            </div>
+        </div>
+
+        <button class="predict-btn" id="predict-btn" onclick="generatePredictions()">🎯 GÉNÉRER LES PRÉDICTIONS</button>
+        <div id="results" class="results hidden"></div>
+    </div>
+
+    <script>
+        const FORM_STATES = {
+            S: { label: 'S', description: 'Très bonne forme', points: 5 },
+            A: { label: 'A', description: 'Bonne forme', points: 4 },
+            B: { label: 'B', description: 'Forme moyenne', points: 3 },
+            C: { label: 'C', description: 'Forme faible', points: 2 },
+            E: { label: 'E', description: 'Très mauvaise forme', points: 1 }
+        };
+
+        const PLAYER_IMPACTS = {
+            light: { label: 'Léger', impact: 0.05 },
+            medium: { label: 'Moyen', impact: 0.15 },
+            heavy: { label: 'Grave', impact: 0.25 }
+        };
+
+        const CONTEXTS = {
+            derby: { label: 'Derby', modifier: 1.15 },
+            equilibre: { label: 'Équilibré', modifier: 1.0 },
+            desequilibre: { label: 'Déséquilibré', modifier: 0.85 }
+        };
+
+        const RECENCY_WEIGHTS = [1.0, 0.85, 0.7, 0.55, 0.4];
+        const LOCATION_RECENCY_WEIGHTS = [1.0, 0.8, 0.6];
+
+        let appState = {
+            teamA: {
+                form: null,
+                restDays: 7,
+                absenceAttack: [],
+                absenceDefense: [],
+                matches: [],
+                homeMatches: []
+            },
+            teamB: {
+                form: null,
+                restDays: 7,
+                absenceAttack: [],
+                absenceDefense: [],
+                matches: [],
+                awayMatches: []
+            },
+            context: 'equilibre'
+        };
+
+        function factorial(n) {
+            if (n <= 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) result *= i;
+            return result;
+        }
+
+        function poisson(lambda, k) {
+            if (lambda <= 0) lambda = 0.1;
+            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        function calculateAllScoreProbabilities(xgA, xgB) {
+            const probs = [];
+            for (let goalsA = 0; goalsA <= 6; goalsA++) {
+                for (let goalsB = 0; goalsB <= 6; goalsB++) {
+                    const prob = poisson(xgA, goalsA) * poisson(xgB, goalsB);
+                    probs.push({
+                        goalsA: goalsA,
+                        goalsB: goalsB,
+                        score: `${goalsA}-${goalsB}`,
+                        probability: prob * 100
+                    });
+                }
+            }
+            return probs;
+        }
+
+        function initializeSelectors() {
+            createFormSelector('teamA-form', 'teamA', 'form');
+            createFormSelector('teamB-form', 'teamB', 'form');
+            createContextSelector();
+            createMatchesInputs('teamA', 5, 'matches');
+            createMatchesInputs('teamB', 5, 'matches');
+            createMatchesInputs('teamA', 3, 'homeMatches', 'home');
+            createMatchesInputs('teamB', 3, 'awayMatches', 'away');
+
+            document.getElementById('teamA-level').addEventListener('change', updateDisparityDisplay);
+            document.getElementById('teamB-level').addEventListener('change', updateDisparityDisplay);
+            document.getElementById('teamA-rank').addEventListener('change', updateDisparityDisplay);
+            document.getElementById('teamB-rank').addEventListener('change', updateDisparityDisplay);
+        }
+
+        function createFormSelector(containerId, team, formType) {
+            const container = document.getElementById(containerId);
+            Object.keys(FORM_STATES).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'state-btn';
+                btn.textContent = key;
+                btn.title = FORM_STATES[key].description;
+                btn.onclick = (e) => selectFormState(containerId, team, formType, key, e);
+                container.appendChild(btn);
+            });
+        }
+
+        function createMatchesInputs(team, count, storeKey, locationSuffix = '') {
+            const suffix = locationSuffix ? `-${locationSuffix}` : '';
+            const container = document.getElementById(`${team}${suffix}-matches`);
+            for (let i = 1; i <= count; i++) {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'match-detail-container';
+                const matchId = `${team}${suffix}-m${i}`;
+                matchDiv.innerHTML = `
+                    <div class="match-detail-header">Match ${i} ${i === 1 ? '(plus récent)' : ''}</div>
+                    <div class="match-detail-grid">
+                        <div class="input-group">
+                            <label class="input-label">xG Marqués</label>
+                            <input type="number" class="match-input-small" id="${matchId}-xg-scored" min="0" step="0.1" value="1.5" placeholder="ex: 1.8">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">xG Concédés</label>
+                            <input type="number" class="match-input-small" id="${matchId}-xga" min="0" step="0.1" value="1.2" placeholder="ex: 1.5">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Buts marqués</label>
+                            <input type="number" class="match-input-small" id="${matchId}-goals" min="0" value="2">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Buts encaissés</label>
+                            <input type="number" class="match-input-small" id="${matchId}-goals-conceded" min="0" value="1">
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Niveau Adv.</label>
+                            <div class="opponent-level-selector" id="${matchId}-opp-level">
+                                <button type="button" class="opponent-level-btn" data-level="S" onclick="selectOpponentLevel('${matchId}', 'S', this)">S</button>
+                                <button type="button" class="opponent-level-btn" data-level="A" onclick="selectOpponentLevel('${matchId}', 'A', this)">A</button>
+                                <button type="button" class="opponent-level-btn active" data-level="B" onclick="selectOpponentLevel('${matchId}', 'B', this)">B</button>
+                                <button type="button" class="opponent-level-btn" data-level="C" onclick="selectOpponentLevel('${matchId}', 'C', this)">C</button>
+                                <button type="button" class="opponent-level-btn" data-level="E" onclick="selectOpponentLevel('${matchId}', 'E', this)">E</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(matchDiv);
+            }
+        }
+
+        function selectOpponentLevel(matchId, level, button) {
+            const container = document.getElementById(`${matchId}-opp-level`);
+            container.querySelectorAll('.opponent-level-btn').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+
+        function getOpponentLevel(matchId) {
+            const container = document.getElementById(`${matchId}-opp-level`);
+            if (!container) return 'B';
+            const activeBtn = container.querySelector('.opponent-level-btn.active');
+            return activeBtn ? activeBtn.dataset.level : 'B';
+        }
+
+        function getOpponentMultiplier(level) {
+            const multipliers = {
+                'S': 1.25,
+                'A': 1.12,
+                'B': 1.0,
+                'C': 0.88,
+                'E': 0.75
+            };
+            return multipliers[level] || 1.0;
+        }
+
+        function createContextSelector() {
+            const container = document.getElementById('context-selector');
+            Object.keys(CONTEXTS).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = 'context-btn';
+                btn.textContent = CONTEXTS[key].label;
+                btn.onclick = (e) => selectContext(key, e);
+                if (key === 'equilibre') btn.classList.add('active');
+                container.appendChild(btn);
+            });
+        }
+
+        function selectFormState(containerId, team, formType, state, event) {
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.state-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            appState[team][formType] = state;
+        }
+
+        function selectContext(context, event) {
+            document.querySelectorAll('.context-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            appState.context = context;
+        }
+
+        function addAbsencePlayer(team, type) {
+            const containerId = `${team}-absence-${type}`;
+            const container = document.getElementById(containerId);
+            const itemId = `${team}-${type}-${Date.now()}`;
+
+            const item = document.createElement('div');
+            item.className = 'absence-item';
+            item.id = itemId;
+            item.innerHTML = `
+                <div class="absence-item-header">
+                    <input type="text" class="absence-item-input" placeholder="Nom du joueur" id="${itemId}-name">
+                </div>
+                <div class="absence-impact-selector">
+                    <button class="absence-impact-btn light active" onclick="setAbsenceImpact('${itemId}', 'light', this)">Léger</button>
+                    <button class="absence-impact-btn medium" onclick="setAbsenceImpact('${itemId}', 'medium', this)">Moyen</button>
+                    <button class="absence-impact-btn heavy" onclick="setAbsenceImpact('${itemId}', 'heavy', this)">Grave</button>
+                </div>
+                <button class="remove-btn" style="width: 100%; margin-top: 6px;" onclick="removeAbsencePlayer('${itemId}')">Supprimer</button>
+            `;
+            container.appendChild(item);
+
+            const key = `absence${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            if (!appState[team][key]) {
+                appState[team][key] = [];
+            }
+            appState[team][key].push({
+                id: itemId,
+                name: '',
+                impact: 'light'
+            });
+        }
+
+        function setAbsenceImpact(itemId, impact, button) {
+            const item = document.getElementById(itemId);
+            item.querySelectorAll('.absence-impact-btn').forEach(btn => btn.classList.remove('active', 'light', 'medium', 'heavy'));
+            button.classList.add('active', impact);
+            updateAbsenceState(itemId, impact);
+        }
+
+        function removeAbsencePlayer(itemId) {
+            document.getElementById(itemId).remove();
+
+            for (const team of ['teamA', 'teamB']) {
+                for (const type of ['Attack', 'Defense']) {
+                    const key = `absence${type}`;
+                    appState[team][key] = appState[team][key].filter(p => p.id !== itemId);
+                }
+            }
+        }
+
+        function updateAbsenceState(itemId, impact) {
+            const nameInput = document.getElementById(`${itemId}-name`);
+            const name = nameInput ? nameInput.value : '';
+
+            for (const team of ['teamA', 'teamB']) {
+                for (const type of ['Attack', 'Defense']) {
+                    const key = `absence${type}`;
+                    const player = appState[team][key].find(p => p.id === itemId);
+                    if (player) {
+                        player.impact = impact;
+                        player.name = name;
+                    }
+                }
+            }
+        }
+
+        function calculateDisparity() {
+            const levelA = parseInt(document.getElementById('teamA-level').value) || 7;
+            const levelB = parseInt(document.getElementById('teamB-level').value) || 7;
+            const rankA = parseInt(document.getElementById('teamA-rank').value) || 10;
+            const rankB = parseInt(document.getElementById('teamB-rank').value) || 10;
+
+            const scoreA = (levelA * 3) + ((21 - rankA) * 0.5);
+            const scoreB = (levelB * 3) + ((21 - rankB) * 0.5);
+
+            const disparity = (scoreA - scoreB) / Math.max(scoreA, scoreB);
+
+            return {
+                disparity: disparity,
+                levelA: levelA,
+                levelB: levelB,
+                scoreA: scoreA,
+                scoreB: scoreB
+            };
+        }
+
+        function updateDisparityDisplay() {
+            const disparityData = calculateDisparity();
+            const disparityValue = document.getElementById('disparity-value');
+
+            if (disparityData.disparity > 0.15) {
+                disparityValue.textContent = `Avantage Domicile (+${(disparityData.disparity * 100).toFixed(0)}%)`;
+                disparityValue.className = 'disparity-value favor-a';
+            } else if (disparityData.disparity < -0.15) {
+                disparityValue.textContent = `Avantage Extérieur (+${(Math.abs(disparityData.disparity) * 100).toFixed(0)}%)`;
+                disparityValue.className = 'disparity-value favor-b';
+            } else {
+                disparityValue.textContent = 'Match équilibré';
+                disparityValue.className = 'disparity-value balanced';
+            }
+        }
+
+        function calculateWeightedxG(team, isHome = true) {
+            const locationSuffix = isHome ? '-home' : '-away';
+            const generalMatches = ['m1', 'm2', 'm3', 'm4', 'm5'];
+            const locationMatches = ['m1', 'm2', 'm3'];
+
+            let totalWeightedXG = 0;
+            let totalWeights = 0;
+
+            generalMatches.forEach((match, index) => {
+                const matchId = `${team}-${match}`;
+                const xgScored = parseFloat(document.getElementById(`${matchId}-xg-scored`)?.value) || 1.5;
+                const oppLevel = getOpponentLevel(matchId);
+                const oppMultiplier = getOpponentMultiplier(oppLevel);
+                const weight = RECENCY_WEIGHTS[index] * oppMultiplier;
+                totalWeightedXG += xgScored * weight;
+                totalWeights += weight;
+            });
+
+            locationMatches.forEach((match, index) => {
+                const matchId = `${team}${locationSuffix}-${match}`;
+                const xgScored = parseFloat(document.getElementById(`${matchId}-xg-scored`)?.value) || 1.5;
+                const oppLevel = getOpponentLevel(matchId);
+                const oppMultiplier = getOpponentMultiplier(oppLevel);
+                const weight = LOCATION_RECENCY_WEIGHTS[index] * 1.5 * oppMultiplier;
+                totalWeightedXG += xgScored * weight;
+                totalWeights += weight;
+            });
+
+            let baseXG = totalWeights > 0 ? totalWeightedXG / totalWeights : 1.5;
+
+            const formState = appState[team].form;
+            if (formState) {
+                const formMultiplier = 0.7 + (FORM_STATES[formState].points * 0.1);
+                baseXG *= formMultiplier;
+            }
+
+            const restDays = parseInt(document.getElementById(`${team}-rest-days`).value) || 7;
+            const fatigueMultiplier = 1 + ((restDays - 7) * 0.03);
+            baseXG *= fatigueMultiplier;
+
+            baseXG *= isHome ? 1.1 : 0.95;
+
+            const absenceAttack = appState[team].absenceAttack || [];
+            const totalAttackImpact = absenceAttack.reduce((sum, player) => sum + PLAYER_IMPACTS[player.impact].impact, 0);
+            baseXG *= (1 - totalAttackImpact);
+
+            baseXG *= CONTEXTS[appState.context].modifier;
+
+            const disparityData = calculateDisparity();
+            if (team === 'teamA' && disparityData.disparity > 0) {
+                baseXG *= (1 + disparityData.disparity * 0.2);
+            } else if (team === 'teamB' && disparityData.disparity < 0) {
+                baseXG *= (1 + Math.abs(disparityData.disparity) * 0.2);
+            }
+
+            return Math.max(0.3, Math.min(4, baseXG));
+        }
+
+        function calculateWeightedxGA(team, isHome = true) {
+            const locationSuffix = isHome ? '-home' : '-away';
+            const generalMatches = ['m1', 'm2', 'm3', 'm4', 'm5'];
+            const locationMatches = ['m1', 'm2', 'm3'];
+
+            let totalWeightedXGA = 0;
+            let totalWeights = 0;
+
+            generalMatches.forEach((match, index) => {
+                const matchId = `${team}-${match}`;
+                const xgaConceded = parseFloat(document.getElementById(`${matchId}-xga`)?.value) || 1.2;
+                const oppLevel = getOpponentLevel(matchId);
+                const oppMultiplier = getOpponentMultiplier(oppLevel);
+                const weight = RECENCY_WEIGHTS[index] * oppMultiplier;
+                totalWeightedXGA += xgaConceded * weight;
+                totalWeights += weight;
+            });
+
+            locationMatches.forEach((match, index) => {
+                const matchId = `${team}${locationSuffix}-${match}`;
+                const xgaConceded = parseFloat(document.getElementById(`${matchId}-xga`)?.value) || 1.2;
+                const oppLevel = getOpponentLevel(matchId);
+                const oppMultiplier = getOpponentMultiplier(oppLevel);
+                const weight = LOCATION_RECENCY_WEIGHTS[index] * 1.5 * oppMultiplier;
+                totalWeightedXGA += xgaConceded * weight;
+                totalWeights += weight;
+            });
+
+            let baseXGA = totalWeights > 0 ? totalWeightedXGA / totalWeights : 1.2;
+
+            const formState = appState[team].form;
+            if (formState) {
+                const formMultiplier = 1.3 - (FORM_STATES[formState].points * 0.1);
+                baseXGA *= formMultiplier;
+            }
+
+            const restDays = parseInt(document.getElementById(`${team}-rest-days`).value) || 7;
+            const fatigueMultiplier = 1 + ((restDays - 7) * 0.02);
+            baseXGA *= fatigueMultiplier;
+
+            baseXGA *= isHome ? 0.9 : 1.1;
+
+            const absenseDefense = appState[team].absenceDefense || [];
+            const totalDefenseImpact = absenseDefense.reduce((sum, player) => sum + PLAYER_IMPACTS[player.impact].impact, 0);
+            baseXGA *= (1 + totalDefenseImpact);
+
+            baseXGA *= CONTEXTS[appState.context].modifier;
+
+            const disparityData = calculateDisparity();
+            if (team === 'teamA' && disparityData.disparity > 0) {
+                baseXGA *= (1 - disparityData.disparity * 0.15);
+            } else if (team === 'teamB' && disparityData.disparity < 0) {
+                baseXGA *= (1 - Math.abs(disparityData.disparity) * 0.15);
+            }
+
+            return Math.max(0.2, Math.min(3.5, baseXGA));
+        }
+
+        function showCustomAlert(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'custom-alert';
+            alertDiv.innerHTML = `
+                <div class="custom-alert-content">
+                    <div class="custom-alert-message">${message}</div>
+                    <button class="custom-alert-btn" onclick="this.closest('.custom-alert').remove()">OK</button>
+                </div>
+            `;
+            document.body.appendChild(alertDiv);
+        }
+
+        function quickFillTeamA() {
+            document.getElementById('teamA-name').value = 'PSG';
+            document.getElementById('teamA-rank').value = '2';
+            document.getElementById('teamA-level').value = '9';
+            document.querySelector('#teamA-form .state-btn:nth-child(2)').click();
+            
+            const matchInputsA = ['m1', 'm2', 'm3', 'm4', 'm5'];
+            matchInputsA.forEach((m, i) => {
+                document.getElementById(`teamA-${m}-xg-scored`).value = 1.8 + (i * 0.1);
+                document.getElementById(`teamA-${m}-xga`).value = 1.1 + (i * 0.05);
+            });
+            
+            const homeMatchesA = ['m1', 'm2', 'm3'];
+            homeMatchesA.forEach((m, i) => {
+                document.getElementById(`teamA-home-${m}-xg-scored`).value = 2.0 + (i * 0.1);
+                document.getElementById(`teamA-home-${m}-xga`).value = 0.9 + (i * 0.05);
+            });
+        }
+
+        function quickFillTeamB() {
+            document.getElementById('teamB-name').value = 'OM';
+            document.getElementById('teamB-rank').value = '5';
+            document.getElementById('teamB-level').value = '8';
+            document.querySelector('#teamB-form .state-btn:nth-child(3)').click();
+            
+            const matchInputsB = ['m1', 'm2', 'm3', 'm4', 'm5'];
+            matchInputsB.forEach((m, i) => {
+                document.getElementById(`teamB-${m}-xg-scored`).value = 1.5 + (i * 0.08);
+                document.getElementById(`teamB-${m}-xga`).value = 1.3 + (i * 0.06);
+            });
+            
+            const awayMatchesB = ['m1', 'm2', 'm3'];
+            awayMatchesB.forEach((m, i) => {
+                document.getElementById(`teamB-away-${m}-xg-scored`).value = 1.6 + (i * 0.08);
+                document.getElementById(`teamB-away-${m}-xga`).value = 1.2 + (i * 0.06);
+            });
+        }
+
+        function generatePredictions() {
+            const teamAName = document.getElementById('teamA-name').value || 'Équipe Domicile';
+            const teamBName = document.getElementById('teamB-name').value || 'Équipe Extérieur';
+
+            if (!appState.teamA.form || !appState.teamB.form) {
+                showCustomAlert('⚠️ Veuillez sélectionner l\'état de forme des deux équipes');
+                return;
+            }
+
+            appState.teamA.restDays = parseInt(document.getElementById('teamA-rest-days').value) || 7;
+            appState.teamB.restDays = parseInt(document.getElementById('teamB-rest-days').value) || 7;
+
+            document.querySelectorAll('.absence-item-input').forEach(input => {
+                const itemId = input.id.replace('-name', '');
+                for (const team of ['teamA', 'teamB']) {
+                    for (const type of ['Attack', 'Defense']) {
+                        const key = `absence${type}`;
+                        const player = appState[team][key].find(p => p.id === itemId);
+                        if (player) player.name = input.value;
+                    }
+                }
+            });
+
+            const xgA = calculateWeightedxG('teamA', true);
+            const xgB = calculateWeightedxG('teamB', false);
+            const xgaA = calculateWeightedxGA('teamA', true);
+            const xgaB = calculateWeightedxGA('teamB', false);
+
+            const defenseAdjustmentA = (xgaB * 0.15);
+            const defenseAdjustmentB = (xgaA * 0.15);
+
+            const xgA_Final = Math.max(0.3, Math.min(4, xgA + defenseAdjustmentA));
+            const xgB_Final = Math.max(0.3, Math.min(4, xgB + defenseAdjustmentB));
+
+            const allScores = calculateAllScoreProbabilities(xgA_Final, xgB_Final);
+            const probableScores = allScores.sort((a, b) => b.probability - a.probability).slice(0, 3);
+
+            let probWinA = 0, probDraw = 0, probWinB = 0;
+            let probOver25 = 0, probUnder25 = 0;
+            let probOver15A = 0, probOver15B = 0;
+            let probBTTS = 0, probNoBTTS = 0;
+
+            allScores.forEach(s => {
+                const totalGoals = s.goalsA + s.goalsB;
+
+                if (s.goalsA > s.goalsB) probWinA += s.probability;
+                else if (s.goalsA < s.goalsB) probWinB += s.probability;
+                else probDraw += s.probability;
+
+                if (totalGoals > 2.5) probOver25 += s.probability;
+                else probUnder25 += s.probability;
+
+                if (s.goalsA >= 2) probOver15A += s.probability;
+                if (s.goalsB >= 2) probOver15B += s.probability;
+
+                if (s.goalsA >= 1 && s.goalsB >= 1) probBTTS += s.probability;
+                else probNoBTTS += s.probability;
+            });
+
+            const totalResult = probWinA + probDraw + probWinB;
+            probWinA = (probWinA / totalResult) * 100;
+            probDraw = (probDraw / totalResult) * 100;
+            probWinB = (probWinB / totalResult) * 100;
+
+            const h2h = {
+                m1: { a: parseInt(document.getElementById('h2h-1-a').value) || 0, b: parseInt(document.getElementById('h2h-1-b').value) || 0 },
+                m2: { a: parseInt(document.getElementById('h2h-2-a').value) || 0, b: parseInt(document.getElementById('h2h-2-b').value) || 0 },
+                m3: { a: parseInt(document.getElementById('h2h-3-a').value) || 0, b: parseInt(document.getElementById('h2h-3-b').value) || 0 }
+            };
+
+            const h2hWinsA = [h2h.m1, h2h.m2, h2h.m3].filter(m => m.a > m.b).length;
+            const h2hWinsB = [h2h.m1, h2h.m2, h2h.m3].filter(m => m.b > m.a).length;
+
+            const h2hAdjust = (h2hWinsA - h2hWinsB) * 0.5;
+            probWinA = Math.max(5, Math.min(90, probWinA + h2hAdjust));
+            probWinB = Math.max(5, Math.min(90, probWinB - h2hAdjust));
+            const totalNew = probWinA + probDraw + probWinB;
+            probWinA = (probWinA / totalNew) * 100;
+            probDraw = (probDraw / totalNew) * 100;
+            probWinB = (probWinB / totalNew) * 100;
+
+            const predictions = [];
+
+            const maxProb = Math.max(probWinA, probWinB, probDraw);
+            const doubleChanceAX = probWinA + probDraw;
+            const doubleChanceX2 = probWinB + probDraw;
+
+            if (maxProb >= 70) {
+                if (probWinA >= 70) {
+                    predictions.push({ label: 'Résultat', value: `Victoire ${teamAName}`, confidence: probWinA });
+                } else if (probWinB >= 70) {
+                    predictions.push({ label: 'Résultat', value: `Victoire ${teamBName}`, confidence: probWinB });
+                } else if (probDraw >= 70) {
+                    predictions.push({ label: 'Résultat', value: 'Match Nul', confidence: probDraw });
+                }
+            } else if (doubleChanceAX >= 70 && doubleChanceAX <= 95) {
+                predictions.push({ label: 'Double Chance', value: `${teamAName} ou Nul`, confidence: doubleChanceAX });
+            } else if (doubleChanceX2 >= 70 && doubleChanceX2 <= 95) {
+                predictions.push({ label: 'Double Chance', value: `${teamBName} ou Nul`, confidence: doubleChanceX2 });
+            }
+
+            if (probBTTS >= 80 && probBTTS <= 95) {
+                predictions.push({ label: 'BTTS', value: 'OUI', confidence: probBTTS });
+            } else if (probNoBTTS >= 80 && probNoBTTS <= 95) {
+                predictions.push({ label: 'BTTS', value: 'NON', confidence: probNoBTTS });
+            }
+
+            const probUnder15A = 100 - probOver15A;
+            if (probOver15A >= 75) {
+                predictions.push({ label: `Buts ${teamAName}`, value: 'Over 1.5', confidence: probOver15A });
+            } else if (probUnder15A >= 75) {
+                predictions.push({ label: `Buts ${teamAName}`, value: 'Under 1.5', confidence: probUnder15A });
+            }
+
+            const probUnder15B = 100 - probOver15B;
+            if (probOver15B >= 75) {
+                predictions.push({ label: `Buts ${teamBName}`, value: 'Over 1.5', confidence: probOver15B });
+            } else if (probUnder15B >= 75) {
+                predictions.push({ label: `Buts ${teamBName}`, value: 'Under 1.5', confidence: probUnder15B });
+            }
+
+            if (probOver25 >= 75) {
+                predictions.push({ label: 'Total buts', value: 'Over 2.5', confidence: probOver25 });
+            } else if (probUnder25 >= 75) {
+                predictions.push({ label: 'Total buts', value: 'Under 2.5', confidence: probUnder25 });
+            }
+
+            displayResults(
+                teamAName, teamBName,
+                xgA, xgB, xgaA, xgaB,
+                xgA_Final, xgB_Final,
+                predictions, probableScores,
+                { probWinA, probDraw, probWinB, probOver25, probBTTS }
+            );
+        }
+
+        function displayResults(teamAName, teamBName, xgA, xgB, xgaA, xgaB, xgA_Final, xgB_Final, predictions, probableScores, stats) {
+            const resultsDiv = document.getElementById('results');
+            const disparityData = calculateDisparity();
+            const absencesA_Attack = appState.teamA.absenceAttack.map(p => `${p.name || 'Joueur'} (${p.impact})`).join(', ') || 'Aucune';
+            const absencesA_Defense = appState.teamA.absenceDefense.map(p => `${p.name || 'Joueur'} (${p.impact})`).join(', ') || 'Aucune';
+            const absencesB_Attack = appState.teamB.absenceAttack.map(p => `${p.name || 'Joueur'} (${p.impact})`).join(', ') || 'Aucune';
+            const absencesB_Defense = appState.teamB.absenceDefense.map(p => `${p.name || 'Joueur'} (${p.impact})`).join(', ') || 'Aucune';
+
+            let html = '<div class="result-card">';
+            html += '<div class="result-title">📊 ANALYSE & PRÉDICTIONS</div>';
+
+            html += '<div class="stats-summary">';
+            html += `<div class="stat-box"><div class="stat-label">xG ${teamAName}</div><div class="stat-value">${xgA_Final.toFixed(2)}</div></div>`;
+            html += `<div class="stat-box"><div class="stat-label">xG ${teamBName}</div><div class="stat-value">${xgB_Final.toFixed(2)}</div></div>`;
+            html += `<div class="stat-box"><div class="stat-label">Victoire ${teamAName}</div><div class="stat-value">${stats.probWinA.toFixed(0)}%</div></div>`;
+            html += `<div class="stat-box"><div class="stat-label">Victoire ${teamBName}</div><div class="stat-value">${stats.probWinB.toFixed(0)}%</div></div>`;
+            html += '</div>';
+
+            html += '<div class="xg-comparison">';
+            html += '<div class="xg-title">⚽ Expected Goals MARQUÉS (Pondérés)</div>';
+            html += '<div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">${teamAName}</div><div class="xg-value">${xgA.toFixed(2)}</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">${teamBName}</div><div class="xg-value">${xgB.toFixed(2)}</div></div>`;
+            html += '</div></div>';
+
+            html += '<div class="xg-comparison">';
+            html += '<div class="xg-title">🛡️ Expected Goals CONCÉDÉS (Pondérés)</div>';
+            html += '<div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">${teamAName}</div><div class="xg-value conceded">${xgaA.toFixed(2)}</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">${teamBName}</div><div class="xg-value conceded">${xgaB.toFixed(2)}</div></div>`;
+            html += '</div></div>';
+
+            html += '<div class="xg-comparison" style="border-color: var(--accent-yellow);">';
+            html += '<div class="xg-title">🎯 xG FINAUX POISSON</div>';
+            html += '<div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">${teamAName}</div><div class="xg-value">${xgA_Final.toFixed(2)}</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">${teamBName}</div><div class="xg-value">${xgB_Final.toFixed(2)}</div></div>`;
+            html += '</div></div>';
+
+            html += '<div class="xg-comparison">';
+            html += '<div class="xg-title">🚑 Absences Joueurs Clés</div>';
+            html += '<div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">${teamAName} - Attaque</div><div style="font-size: 0.9rem; color: var(--accent-red);">${absencesA_Attack}</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">${teamAName} - Défense</div><div style="font-size: 0.9rem; color: var(--accent-blue);">${absencesA_Defense}</div></div>`;
+            html += '</div><div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">${teamBName} - Attaque</div><div style="font-size: 0.9rem; color: var(--accent-red);">${absencesB_Attack}</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">${teamBName} - Défense</div><div style="font-size: 0.9rem; color: var(--accent-blue);">${absencesB_Defense}</div></div>`;
+            html += '</div></div>';
+
+            html += '<div class="xg-comparison">';
+            html += '<div class="xg-title">📊 Analyse Disparité de Niveau</div>';
+            html += '<div class="xg-row">';
+            html += `<div class="xg-item"><div class="xg-label">Niveau ${teamAName}</div><div class="xg-value">${disparityData.levelA}/10</div></div>`;
+            html += `<div class="xg-item"><div class="xg-label">Niveau ${teamBName}</div><div class="xg-value">${disparityData.levelB}/10</div></div>`;
+            html += '</div>';
+            const disparityText = disparityData.disparity > 0.15
+                ? `Avantage ${teamAName}`
+                : disparityData.disparity < -0.15
+                    ? `Avantage ${teamBName}`
+                    : 'Match équilibré';
+            html += `<div class="xg-row"><div class="xg-item" style="grid-column: span 2;"><div class="xg-label">Verdict disparité</div><div class="xg-value">${disparityText} (${(Math.abs(disparityData.disparity) * 100).toFixed(0)}%)</div></div></div>`;
+            html += '</div>';
+
+            html += '<div class="xg-comparison" style="border-color: var(--accent-green);">';
+            html += '<div class="xg-title">✅ PRÉDICTIONS VALIDÉES</div>';
+            if (predictions.length === 0) {
+                html += '<div class="no-predictions">⚠️ Aucune prédiction ne respecte les seuils de certitude.<br><br>Seuils: Victoire/Nul ≥70% | BTTS 80-95% | Over/Under ≥75%</div>';
+            } else {
+                predictions.forEach(pred => {
+                    html += `<div class="prediction-item"><div class="prediction-label">${pred.label}</div><div class="prediction-value">${pred.value}<span class="confidence">${pred.confidence.toFixed(1)}%</span></div></div>`;
+                });
+            }
+            html += '</div>';
+
+            html += '<div class="xg-comparison">';
+            html += '<div class="xg-title">🎯 3 Scores Les Plus Probables</div>';
+            probableScores.forEach((scoreData, index) => {
+                html += `<div class="prediction-item"><div class="prediction-label">Score ${index + 1}</div><div class="prediction-value">${scoreData.score}<span class="confidence">${scoreData.probability.toFixed(1)}%</span></div></div>`;
+            });
+            html += '</div>';
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+            resultsDiv.classList.remove('hidden');
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            event.matches ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark');
+        });
+
+        initializeSelectors();
+        updateDisparityDisplay();
+    </script>
+</body>
+</html>
